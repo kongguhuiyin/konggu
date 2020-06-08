@@ -4,6 +4,7 @@
 @LastEditors: kongu
 @LastEditTime: 2020-06-07 22:20:58
 @FilePath: \Pythonf:\大三下学期课程\Data_Analysis_Course(2020_3_2)\关键蛋白质识别与预测-课程考核\关键蛋白识别与预测_new.py
+说明：因本人水平有限，精确度只有78.1%，见谅。
 '''
 import os
 import math

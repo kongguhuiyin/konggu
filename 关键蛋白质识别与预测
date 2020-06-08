@@ -1,0 +1,167 @@
+'''
+@Author: kongu
+@Date: 2020-05-21 16:00:19
+@LastEditors: kongu
+@LastEditTime: 2020-06-07 22:20:58
+@FilePath: \Pythonf:\大三下学期课程\Data_Analysis_Course(2020_3_2)\关键蛋白质识别与预测-课程考核\关键蛋白识别与预测_new.py
+'''
+import os
+import math
+import time
+import heapq
+import random
+import datetime
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn import tree
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+
+plt.rcParams['font.sans-serif'] = ['SimHei']
+plt.rcParams['axes.unicode_minus'] = False
+path = r"F:\\大三下学期课程\Data_Analysis_Course(2020_3_2)\\关键蛋白质识别与预测-课程考核\\protein_dataset\\"
+
+def Preprocessing():
+    # 获取数据
+    DIP = pd.read_csv(path + "DIP20101010.txt", sep='\s+',header=None)
+    GED = pd.read_csv(path + "gene_express_data.txt", sep='\s+', header=None)
+    ESS = pd.read_csv(path + "Essential.txt", header=None)
+    
+    # 统计蛋白质出现次数
+    DIP0 = np.array(DIP[0], dtype='str')    # 取出第一列，第二列
+    DIP1 = np.array(DIP[1], dtype='str')
+    DIP0_1 = np.append(DIP0, DIP1)    # 合并
+    index = np.unique(DIP0_1)    # 去重，排序
+    res = np.zeros(len(index), dtype=int)
+    for i in range(len(index)):
+        res[i] = np.sum(index[i] == DIP0_1)    # res: 5093
+    # print(res)
+    GED_index = np.array(GED[0], dtype='str')  # 统计相互作用蛋白质出现次数
+    GED_value = np.zeros(len(GED_index), dtype=int)
+    for i in range(len(GED_index)):
+        for j in range(len(index)):
+            if(GED_index[i] == index[j]):
+                GED_value[i] = res[j]
+                break
+    print("相互作用蛋白质出现次数:")
+    # print(GED_value)
+    t = 0
+    for i in GED_value:
+        t += 1
+    print("t = " , t)
+
+    # 算蛋白质的频次
+    DIP_1, Fina_DIP, t = [], [], 0
+    DIP_copy = DIP.values.tolist()   # DataFrame -> list
+    for i in DIP_copy:
+        DIP_1.append(i[0])
+        DIP_1.append(i[1])
+    fre = {}
+    for i in set(DIP_1):
+        fre[i] = DIP_1.count(i)
+    
+    sorted(fre.keys())
+    for i in fre:
+        Fina_DIP.append(fre[i])
+        t += 1
+        if t == 4846:
+            break
+    print("蛋白质的频次：")
+    # print(Fina_DIP)
+    t = 0
+    for i in Fina_DIP:
+        t += 1
+    print("t = " , t)
+
+    # 蛋白质在36个观测点的基因表达水平值的平均值
+    date = np.array(GED.iloc[:,1:37])
+    date_mean = np.zeros(len(date))
+    for i in range(len(date)):
+        date_mean[i] = date[i].mean()
+    print("基因表达水平值的平均值: ")
+    # print(date_mean)
+    t = 0
+    for i in date_mean:
+        t += 1
+    print("t = " , t)
+
+    # 根据已知关键蛋白质数据集，将每个蛋白质标记0或1
+    ESS = np.array(ESS, dtype='str')
+    ESS_vis = np.zeros(len(GED_index), dtype=int)
+    for i in range(len(ESS)):
+        for j in range(len(ESS_vis)):
+            if(ESS[i] == GED_index[j]):
+                ESS_vis[j] = 1
+                break
+    print("关键数据集：")
+    t = 0
+    for i in ESS_vis:
+        t += 1
+    print("t = " , t)
+
+    # 数据处理
+    Test_data = np.array(GED.iloc[:, 6:28])
+    GED_value = GED_value.reshape(4846, 1)
+    date_mean = date_mean.reshape(4846, 1)
+    Fina_DIP = np.array(Fina_DIP).reshape(4846, 1)
+    ESS_vis = ESS_vis.reshape(4846, 1)
+    # pca = PCA(n_components = 24)    # PCA降维
+    # pca = pca.fit_transform(date)    # 先拟合数据，再标准化
+    TEST = np.hstack((Test_data, GED_value))    # 在水平方向上平铺
+    # TEST = np.hstack((TEST, Fina_DIP)) 
+    Train = pd.DataFrame(TEST)
+    Train_X, Test_X, Train_Y, Test_Y = train_test_split(Train, ESS_vis, test_size = 0.4, random_state = 9)    # 划分训练集和测试集
+
+
+    # ————————————————————————决策树————————————————————————
+    param = {   # 网格超参数
+        'criterion':['gini','entropy'],
+        'min_impurity_decrease':[0,0.1,0.2],
+        'max_depth':range(1,10),
+        'max_features':[None,'log2','sqrt']
+    }
+    # clf = DecisionTreeClassifier()
+    # clf.fit(Train_X, Train_Y)
+    # # forest = RandomForestClassifier(n_estimators=100, criterion='entropy', max_depth=5)
+    # # forest.fit(Train_X, Train_Y)
+    # # feat_importance = forest.feature_importances_
+    # gs = GridSearchCV(clf, param, scoring='accuracy', cv=5)
+    # gs.fit(Train_X, Train_Y)
+    # # print(gs)
+    # print("最佳结果的参数的组合:" + str(gs.best_params_))   # best_params_描述了已取得最佳结果的参数的组合。 
+    # print("最好的评分:" + str(gs.best_score_))     # best_score_成员提供优化过程期间观察到的最好的评分
+    # print("准确率：" + str(gs.best_estimator_.score(Test_X, Test_Y)))
+
+
+    # ————————————————————————K近邻————————————————————————
+    k_range = np.arange(20,35,1)
+    k_scores = []
+    for k in k_range:
+        knn = KNeighborsClassifier(n_neighbors=k)
+        scores = cross_val_score(knn, Train_X, Train_Y, cv=10)
+        k_scores.append(scores.mean())
+        print('k=' + str(k))
+    vmax = np.max(k_scores)
+    kmax = k_range[np.argmax(k_scores)]
+    print("******************** k = " + str(kmax))
+
+    best_knn = KNeighborsClassifier(n_neighbors=kmax)
+    best_knn.fit(Train_X, Train_Y)
+    print("-------------------- 准确率：" + str(best_knn.score(Test_X, Test_Y)))
+
+    # ———————————————————————随机森林———————————————————————
+    # forest = RandomForestClassifier(n_estimators=45, criterion='entropy', max_depth=10)
+    # forest.fit(Train_X, Train_Y)
+    # print("准确度：", forest.score(Test_X, Test_Y))
+
+
+
+if __name__ == "__main__":
+    Preprocessing()

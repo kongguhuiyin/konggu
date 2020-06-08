@@ -53,10 +53,7 @@ def Preprocessing():
                 break
     print("相互作用蛋白质出现次数:")
     # print(GED_value)
-    t = 0
-    for i in GED_value:
-        t += 1
-    print("t = " , t)
+
 
     # 蛋白质在36个观测点的基因表达水平值的平均值
     date = np.array(GED.iloc[:,1:37])
@@ -65,10 +62,7 @@ def Preprocessing():
         date_mean[i] = date[i].mean()
     print("基因表达水平值的平均值: ")
     # print(date_mean)
-    t = 0
-    for i in date_mean:
-        t += 1
-    print("t = " , t)
+
 
     # 根据已知关键蛋白质数据集，将每个蛋白质标记0或1
     ESS = np.array(ESS, dtype='str')
@@ -79,10 +73,8 @@ def Preprocessing():
                 ESS_vis[j] = 1
                 break
     print("关键数据集：")
-    t = 0
-    for i in ESS_vis:
-        t += 1
-    print("t = " , t)
+    print(ESS_vis)
+    
 
     # 数据处理
     Test_data = np.array(GED.iloc[:, 6:28])
@@ -124,7 +116,6 @@ def Preprocessing():
         print('k=' + str(k))
     vmax = np.max(k_scores)
     kmax = k_range[np.argmax(k_scores)]
-    print("******************** k = " + str(kmax))
     best_knn = KNeighborsClassifier(n_neighbors=kmax)
     best_knn.fit(Train_X, Train_Y)
     print("-------------------- 准确率：" + str(best_knn.score(Test_X, Test_Y)))

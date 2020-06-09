@@ -39,12 +39,12 @@ def Preprocessing():
     DIP0 = np.array(DIP[0], dtype='str')    # 取出第一列，第二列
     DIP1 = np.array(DIP[1], dtype='str')
     DIP0_1 = np.append(DIP0, DIP1)    # 合并
-    index = np.unique(DIP0_1) 
+    index = np.unique(DIP0_1)    # 去重，排序
     res = np.zeros(len(index), dtype=int)
     for i in range(len(index)):
-        res[i] = np.sum(index[i] == DIP0_1)    # res: 5093
-    # print(res)
-    GED_index = np.array(GED[0], dtype='str')
+        res[i] = np.sum(index[i] == DIP0_1)
+
+    GED_index = np.array(GED[0], dtype='str')  # 统计相互作用蛋白质出现次数
     GED_value = np.zeros(len(GED_index), dtype=int)
     for i in range(len(GED_index)):
         for j in range(len(index)):
@@ -73,19 +73,18 @@ def Preprocessing():
                 ESS_vis[j] = 1
                 break
     print("关键数据集：")
-    print(ESS_vis)
-    
+
 
     # 数据处理
     Test_data = np.array(GED.iloc[:, 6:28])
     GED_value = GED_value.reshape(4846, 1)
     date_mean = date_mean.reshape(4846, 1)
-    Fina_DIP = np.array(Fina_DIP).reshape(4846, 1)
     ESS_vis = ESS_vis.reshape(4846, 1)
-    TEST = np.hstack((Test_data, GED_value))
-    # TEST = np.hstack((TEST, Fina_DIP)) 
+    # pca = PCA(n_components = 24)    # PCA降维
+    # pca = pca.fit_transform(date)    # 先拟合数据，再标准化
+    TEST = np.hstack((Test_data, GED_value))    # 在水平方向上平铺
     Train = pd.DataFrame(TEST)
-    Train_X, Test_X, Train_Y, Test_Y = train_test_split(Train, ESS_vis, test_size = 0.3, random_state = 9)
+    Train_X, Test_X, Train_Y, Test_Y = train_test_split(Train, ESS_vis, test_size = 0.4, random_state = 9)    # 划分训练集和测试集
 
 
     # ————————————————————————决策树————————————————————————
@@ -102,7 +101,9 @@ def Preprocessing():
     # # feat_importance = forest.feature_importances_
     # gs = GridSearchCV(clf, param, scoring='accuracy', cv=5)
     # gs.fit(Train_X, Train_Y)
-    # print("最好的评分:" + str(gs.best_score_))
+    # # print(gs)
+    # print("最佳结果的参数的组合:" + str(gs.best_params_))   # best_params_描述了已取得最佳结果的参数的组合。 
+    # print("最好的评分:" + str(gs.best_score_))     # best_score_成员提供优化过程期间观察到的最好的评分
     # print("准确率：" + str(gs.best_estimator_.score(Test_X, Test_Y)))
 
 
@@ -119,13 +120,6 @@ def Preprocessing():
     best_knn = KNeighborsClassifier(n_neighbors=kmax)
     best_knn.fit(Train_X, Train_Y)
     print("-------------------- 准确率：" + str(best_knn.score(Test_X, Test_Y)))
-    
-    
-    # ———————————————————————随机森林———————————————————————
-    # forest = RandomForestClassifier(n_estimators=45, criterion='entropy', max_depth=10)
-    # forest.fit(Train_X, Train_Y)
-    # print("准确度：", forest.score(Test_X, Test_Y))
-
 
 
 if __name__ == "__main__":
